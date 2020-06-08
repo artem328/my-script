@@ -1,5 +1,7 @@
-import lexer.Lexer;
-import lexer.SyntaxErrorException;
+import my.SyntaxErrorException;
+import my.lexer.Lexer;
+import my.parser.Parser;
+import my.parser.node.ProgramNode;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -19,5 +21,11 @@ public class Main {
         Lexer lexer = new Lexer(new FileInputStream(new File(filename)));
 
         lexer.printTokens();
+
+        Parser parser = new Parser(lexer);
+
+        ProgramNode p = parser.Program();
+
+        System.out.println(p);
     }
 }

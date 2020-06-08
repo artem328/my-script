@@ -1,6 +1,6 @@
-package lexer;
+package my.lexer;
 
-class Token {
+public class Token {
     private TokenType type;
     private int position;
     private char[] value;

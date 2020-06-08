@@ -1,4 +1,6 @@
-package lexer;
+package my.lexer;
+
+import my.SyntaxErrorException;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -9,6 +11,8 @@ import java.util.regex.Pattern;
 class Tokenizer {
     final private static Pattern skip = Pattern.compile("\\s");
     final private static Pattern numberStart = Pattern.compile("[.0-9]");
+    final private static Pattern identifierStart = Pattern.compile("[a-z_]", Pattern.CASE_INSENSITIVE);
+    final private static Pattern identifierAllowed = Pattern.compile("[a-z_]", Pattern.CASE_INSENSITIVE);
 
     private Reader reader;
     private int currentPosition = -1;
@@ -32,7 +36,7 @@ class Tokenizer {
         skip();
 
         if (!hasCurrentChar()) {
-            return new Token(TokenType.EOF, tokenPosition,toCharArray());
+            return new Token(TokenType.EOF, tokenPosition, toCharArray());
         }
 
         return tokenize();
@@ -53,19 +57,48 @@ class Tokenizer {
                 return new Token(TokenType.OPEN_PARENTHESIS, tokenPosition, toCharArray(ch));
             case ')':
                 return new Token(TokenType.CLOSE_PARENTHESIS, tokenPosition, toCharArray(ch));
+            case ';':
+                return new Token(TokenType.SEMICOLON, tokenPosition, toCharArray(ch));
         }
 
         if (numberStart.matcher("" + ch).matches()) {
             return tokenizeNumber();
         }
 
+        if (identifierStart.matcher("" + ch).matches()) {
+            return tokenizeIdentifier();
+        }
+
         throw new SyntaxErrorException(ch, tokenPosition);
+    }
+
+    private Token tokenizeIdentifier() throws IOException {
+        List<Character> characters = new ArrayList<>();
+        char first = getCurrentChar();
+        characters.add(first);
+
+        while (hasNextChar() && identifierAllowed.matcher("" + getNextChar()).matches()) {
+            moveToNextChar();
+            characters.add(getCurrentChar());
+        }
+
+        char[] value = toCharArray(characters);
+
+        switch (String.copyValueOf(value)) {
+            case "print":
+                return new Token(TokenType.PRINT, tokenPosition, value);
+            case "println":
+                return new Token(TokenType.PRINTLN, tokenPosition, value);
+        }
+
+        return new Token(TokenType.IDENTIFIER, tokenPosition, value);
     }
 
     private Token tokenizeNumber() throws IOException {
         List<Character> characters = new ArrayList<>();
         char first = getCurrentChar();
         characters.add(first);
+
         List<String> allowed = new ArrayList<>();
         allowed.add("0-9");
         TokenType type = TokenType.INTEGER;
